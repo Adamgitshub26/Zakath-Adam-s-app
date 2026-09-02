@@ -1,0 +1,16 @@
+{
+  "name": "Zakat Ledger",
+  "short_name": "Zakat",
+  "description": "Track zakat set aside and given, with last year's balance carried forward.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EBF0E8",
+  "theme_color": "#123F30",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

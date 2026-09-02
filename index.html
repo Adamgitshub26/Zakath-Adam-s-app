@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Zakat Ledger</title>
+<meta name="theme-color" content="#123F30" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<!-- iOS home-screen support -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Zakat" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --page:#EBF0E8; --card:#FCFDFB; --brand:#123F30; --brandMid:#2C7A5B;
+    --gold:#A0741C; --ink:#1E241F; --muted:#6E756C; --faint:#98A093;
+    --line:#DCE3D6; --lineSoft:#E7ECE2; --danger:#9E4B3B;
+    --serif:'Fraunces',Georgia,serif; --sans:'Hanken Grotesk',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--page)}
+  body{font-family:var(--sans);color:var(--ink);padding-top:env(safe-area-inset-top)}
+  .wrap{max-width:460px;margin:0 auto;padding:22px 16px 40px;min-height:100vh}
+  input::placeholder{color:var(--faint)}
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield}
+  button{font-family:var(--sans)}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--brandMid);outline-offset:1px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+  .eyebrow{font-size:12px;letter-spacing:.3px;color:var(--faint)}
+  h1{font-family:var(--serif);font-size:26px;font-weight:500;margin:2px 0 0;line-height:1.1}
+  .yearPill{font-size:14px;font-weight:600;color:var(--brand);background:var(--card);
+    border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+
+  .sheet{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px}
+  .rowLabel{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px}
+  .rowHint{font-size:11.5px;color:var(--faint);margin-top:5px}
+  .block{margin-bottom:14px}
+  .chip{font-size:13px;font-weight:600;color:var(--muted);background:var(--page);
+    border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .carryBtn{width:100%;font-size:13.5px;font-weight:600;color:var(--brand);background:var(--page);
+    border:1px solid var(--line);border-radius:12px;padding:11px 0;cursor:pointer;margin-top:2px}
+  .removeYearBtn{width:100%;font-size:12.5px;font-weight:600;color:var(--danger);background:transparent;
+    border:none;padding:10px 0 2px;cursor:pointer;margin-top:4px}
+  .confirmRow{display:flex;gap:8px;margin-top:8px}
+  .dangerBtn{flex:1;font-size:13.5px;font-weight:600;color:#fff;background:var(--danger);
+    border:1px solid var(--danger);border-radius:12px;padding:11px 0;cursor:pointer}
+
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 20px;text-align:center}
+  .heroLabel{font-size:13px;color:var(--muted);margin-bottom:4px}
+  .heroNum{font-family:var(--serif);font-size:46px;font-weight:500;color:var(--brand);line-height:1;
+    letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .heroNum .cur{font-size:.5em;vertical-align:.28em;margin-right:2px;color:var(--brandMid)}
+  .heroSub{font-size:13px;color:var(--faint);margin-top:6px}
+
+  .statRow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+  .statCell{background:var(--card);border:1px solid var(--lineSoft);border-radius:12px;padding:11px 10px;text-align:center}
+  .statLabel{font-size:11.5px;color:var(--muted);margin-bottom:3px}
+  .statVal{font-family:var(--serif);font-size:17px;font-weight:500}
+
+  .addCard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:18px}
+  .seg{display:flex;gap:6px;background:var(--page);border-radius:10px;padding:4px}
+  .segBtn{flex:1;font-size:13.5px;font-weight:600;color:var(--muted);background:transparent;
+    border:none;border-radius:8px;padding:9px 0;cursor:pointer;transition:background .15s,color .15s}
+  .segBtn.added{background:var(--gold);color:#fff}
+  .segBtn.given{background:var(--brand);color:#fff}
+  .fieldRow{display:flex;gap:8px;margin-top:12px}
+  .amtField{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;
+    padding:0 12px;background:#fff;height:46px;flex:1}
+  .cur{font-family:var(--serif);font-size:16px;color:var(--faint);margin-right:6px}
+  .amtInput{border:none;outline:none;background:transparent;width:100%;color:var(--ink);
+    height:44px;font-size:20px;font-family:var(--serif)}
+  .dateInput{border:1px solid var(--line);border-radius:10px;padding:0 10px;width:130px;
+    height:46px;font-size:13px;color:var(--ink);background:#fff;font-family:var(--sans)}
+  .noteInput{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    margin-top:8px;font-size:14px;font-family:var(--sans);background:#fff;color:var(--ink);outline:none}
+  .addBtn{width:100%;margin-top:12px;font-size:15px;font-weight:600;color:#fff;background:var(--brand);
+    border:none;border-radius:12px;padding:13px 0;cursor:pointer}
+
+  .entriesHead{font-size:13px;color:var(--muted);margin:22px 0 8px;padding-left:2px}
+  .entryRow{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--lineSoft)}
+  .dot{width:8px;height:8px;border-radius:999px;flex:0 0 auto}
+  .entryMain{flex:1;min-width:0}
+  .entryNote{font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .entryDate{font-size:12px;color:var(--faint)}
+  .entryAmt{font-family:var(--serif);font-size:16px;font-weight:500;white-space:nowrap}
+  .del{border:none;background:transparent;color:var(--faint);font-size:20px;line-height:1;
+    cursor:pointer;padding:0 2px;opacity:.55;transition:opacity .15s}
+  .entryRow:hover .del{opacity:1}
+  .empty{font-size:13.5px;color:var(--faint);text-align:center;padding:26px 20px;
+    border:1px dashed var(--line);border-radius:14px;line-height:1.5}
+  .foot{margin-top:24px;font-size:11px;color:var(--faint);text-align:center;line-height:1.6}
+  .curMark{color:var(--gold)} .curMark.given{color:var(--brand)}
+  .installTip{display:none;margin-top:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--muted);line-height:1.5}
+  .installTip button{margin-left:8px;font-size:12.5px;font-weight:600;color:var(--brand);
+    background:var(--page);border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Zakat ledger</div>
+      <h1>What I still owe</h1>
+    </div>
+    <button class="yearPill" data-action="toggle-settings"><span id="yearPillText"></span> <span style="opacity:.6;margin-left:4px">&#8964;</span></button>
+  </header>
+
+  <div id="settings"></div>
+
+  <section class="hero">
+    <div class="heroLabel">Balance still to give</div>
+    <div class="heroNum" id="heroNum"></div>
+    <div class="heroSub" id="heroSub"></div>
+  </section>
+
+  <section class="statRow" id="statRow"></section>
+
+  <section class="addCard">
+    <div class="seg">
+      <button class="segBtn" id="segAdded" data-action="kind" data-kind="added">Added money</button>
+      <button class="segBtn" id="segGiven" data-action="kind" data-kind="given">Gave zakat</button>
+    </div>
+    <div class="fieldRow">
+      <div class="amtField">
+        <span class="cur amtCur"></span>
+        <input class="amtInput" id="amount" type="number" inputmode="decimal" placeholder="0" />
+      </div>
+      <input class="dateInput" id="date" type="date" />
+    </div>
+    <input class="noteInput" id="note" placeholder="Note (optional)" />
+    <button class="addBtn" id="addBtn" data-action="add-entry">Record zakat given</button>
+  </section>
+
+  <input type="file" id="importFile" accept="application/json,.json" style="display:none" />
+
+  <div class="installTip" id="installTip">
+    Install this to your home screen for one-tap access.
+    <button id="installBtn">Install</button>
+  </div>
+
+  <section>
+    <div class="entriesHead" id="entriesHead"></div>
+    <div id="entries"></div>
+  </section>
+
+  <div class="foot">
+    Balance = brought forward + added &minus; given.<br />
+    Saved on this device. A quick tally, not a substitute for a scholar's ruling.
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="zakat-ledger-v1", mem=null;
+  function load(){ try{ var r=localStorage.getItem(KEY); return r?JSON.parse(r):null; }catch(e){ return mem; } }
+  function save(s){ mem=s; try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){} }
+
+  function thisYear(){ return new Date().getFullYear(); }
+  function today(){ return new Date().toISOString().slice(0,10); }
+  function uid(){ return Math.random().toString(36).slice(2,10); }
+  function fmt(n){
+    var v=Math.round((Number(n)||0)*100)/100;
+    return v.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2});
+  }
+  function niceDate(iso){
+    var d=new Date(iso+"T00:00:00");
+    if(isNaN(d)) return iso;
+    return d.toLocaleDateString(undefined,{day:"numeric",month:"short"});
+  }
+  function freshYear(op){ return {opening:op||0,entries:[]}; }
+
+  var data=load();
+  if(!data||!data.years){ var y=thisYear(); data={currency:"\u20B9",currentYear:y,years:{}}; data.years[y]=freshYear(0); }
+  save(data);
+
+  // UI state
+  var settingsOpen=false, confirmDel=false, kind="given";
+
+  function cur(){ return data.currency||"\u20B9"; }
+  function yData(){ return data.years[data.currentYear]; }
+  function totals(){
+    var y=yData(), added=0, given=0;
+    y.entries.forEach(function(e){ if(e.kind==="added") added+=Number(e.amount)||0; else given+=Number(e.amount)||0; });
+    var opening=Number(y.opening)||0;
+    return {opening:opening, added:added, given:given, balance:opening+added-given};
+  }
+  function yearsList(){ return Object.keys(data.years).map(Number).sort(function(a,b){return a-b;}); }
+
+  // ── element refs ──
+  var $=function(id){ return document.getElementById(id); };
+  var settingsEl=$("settings");
+
+  // ── render pieces ──
+  function renderSettings(){
+    if(!settingsOpen){ settingsEl.innerHTML=""; return; }
+    var y=data.currentYear, ys=yearsList(), t=totals(), c=cur();
+    var chips=ys.map(function(yr){
+      return '<button class="chip'+(yr===y?' on':'')+'" data-action="switch-year" data-year="'+yr+'">'+yr+'</button>';
+    }).join("");
+    chips+='<button class="chip" data-action="add-year">+ add</button>';
+
+    var removeHtml="";
+    if(ys.length>1){
+      if(confirmDel){
+        removeHtml='<div class="confirmRow">'+
+          '<button class="dangerBtn" data-action="confirm-remove">Remove '+y+' &amp; its entries</button>'+
+          '<button class="chip" data-action="cancel-remove">Cancel</button></div>';
+      } else {
+        removeHtml='<button class="removeYearBtn" data-action="remove-year">Remove '+y+'</button>';
+      }
+    }
+
+    settingsEl.innerHTML=
+      '<div class="sheet">'+
+        '<div class="block"><div class="rowLabel">Year</div><div class="chips">'+chips+'</div></div>'+
+        '<div class="block"><div class="rowLabel">Brought forward</div>'+
+          '<div class="amtField" style="max-width:200px"><span class="cur">'+c+'</span>'+
+          '<input class="amtInput" style="font-size:16px" id="openingInput" type="number" placeholder="0" value="'+(y&&yData().opening?yData().opening:"")+'" data-field="opening" /></div>'+
+          '<div class="rowHint">Last year\'s leftover \u2014 the opening balance for this year.</div></div>'+
+        '<div class="block"><div class="rowLabel">Currency symbol</div>'+
+          '<input class="dateInput" style="width:70px;text-align:center" id="currencyInput" maxlength="4" value="'+c+'" data-field="currency" /></div>'+
+        '<div class="block"><div class="rowLabel">Backup</div>'+
+          '<div style="display:flex;gap:8px">'+
+            '<button class="carryBtn" data-action="export" style="margin-top:0">Export backup</button>'+
+            '<button class="carryBtn" data-action="import" style="margin-top:0">Import file</button>'+
+          '</div>'+
+          '<div class="rowHint">Export saves all years to a file you can keep. Import replaces everything on this device with a backup file.</div></div>'+
+        '<button class="carryBtn" data-action="carry" id="carryBtn">Close '+y+' \u2192 carry '+c+fmt(t.balance)+' into '+(y+1)+'</button>'+
+        removeHtml+
+      '</div>';
+  }
+
+  function renderSummary(){
+    var t=totals(), c=cur();
+    $("yearPillText").textContent=data.currentYear;
+    $("heroNum").innerHTML='<span class="cur">'+c+'</span>'+fmt(t.balance);
+    var sub;
+    if(t.balance>0) sub="Given so far this year: "+c+fmt(t.given);
+    else if(t.balance===0) sub="All settled \u2014 nothing outstanding.";
+    else sub="Given "+c+fmt(-t.balance)+" beyond what was set aside.";
+    $("heroSub").textContent=sub;
+
+    $("statRow").innerHTML=
+      statCell("Brought forward",c+fmt(t.opening),"var(--gold)")+
+      statCell("Added this year",c+fmt(t.added),"var(--gold)")+
+      statCell("Given this year",c+fmt(t.given),"var(--brand)");
+
+    // currency mark in the add form
+    document.querySelectorAll(".amtCur").forEach(function(el){ el.textContent=c; });
+  }
+  function statCell(label,val,color){
+    return '<div class="statCell"><div class="statLabel">'+label+'</div>'+
+      '<div class="statVal" style="color:'+color+'">'+val+'</div></div>';
+  }
+
+  function renderEntries(){
+    var y=yData(), c=cur();
+    $("entriesHead").textContent="Entries \u00B7 "+data.currentYear;
+    var list=y.entries.slice().sort(function(a,b){
+      return a.date===b.date ? b.created-a.created : b.date.localeCompare(a.date);
+    });
+    if(list.length===0){
+      $("entries").innerHTML='<div class="empty">No entries yet. Add money you\'ve set aside, or record zakat you\'ve given.</div>';
+      return;
+    }
+    $("entries").innerHTML=list.map(function(e){
+      var isAdd=e.kind==="added";
+      var color=isAdd?"var(--gold)":"var(--brand)";
+      var note=e.note || (isAdd?"Money set aside":"Zakat given");
+      return '<div class="entryRow">'+
+        '<div class="dot" style="background:'+(isAdd?"var(--gold)":"var(--brandMid)")+'"></div>'+
+        '<div class="entryMain"><div class="entryNote">'+escapeHtml(note)+'</div>'+
+        '<div class="entryDate">'+niceDate(e.date)+'</div></div>'+
+        '<div class="entryAmt" style="color:'+color+'">'+(isAdd?"+":"\u2212")+c+fmt(e.amount)+'</div>'+
+        '<button class="del" data-action="del" data-id="'+e.id+'" aria-label="Delete">&times;</button>'+
+      '</div>';
+    }).join("");
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(m){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]; }); }
+
+  function renderSeg(){
+    $("segAdded").className="segBtn"+(kind==="added"?" added":"");
+    $("segGiven").className="segBtn"+(kind==="given"?" given":"");
+    $("addBtn").textContent=kind==="given"?"Record zakat given":"Add money set aside";
+    $("note").placeholder=kind==="given"?"Who / what for (optional)":"Note (optional)";
+  }
+
+  function renderAll(){ renderSeg(); renderSettings(); renderSummary(); renderEntries(); }
+
+  // ── mutations ──
+  function addEntry(){
+    var val=parseFloat($("amount").value);
+    if(!val||val<=0){ $("amount").focus(); return; }
+    var d=$("date").value||today();
+    yData().entries.push({id:uid(),kind:kind,amount:val,date:d,note:($("note").value||"").trim(),created:Date.now()});
+    save(data);
+    $("amount").value=""; $("note").value=""; $("date").value=today();
+    renderSummary(); renderEntries();
+    $("amount").focus();
+  }
+  function delEntry(id){
+    var y=yData(); y.entries=y.entries.filter(function(e){return e.id!==id;});
+    save(data); renderSummary(); renderEntries();
+  }
+  function switchYear(yr){
+    confirmDel=false;
+    if(!data.years[yr]) data.years[yr]=freshYear(0);
+    data.currentYear=yr; save(data); renderAll();
+  }
+  function deleteYear(yr){
+    var remaining=yearsList().filter(function(x){return x!==yr;});
+    if(remaining.length===0) return;
+    delete data.years[yr];
+    if(data.currentYear===yr) data.currentYear=remaining.sort(function(a,b){return b-a;})[0];
+    confirmDel=false; save(data); renderAll();
+  }
+  function ask(msg){ try{ return window.confirm(msg); }catch(e){ return true; } }
+
+  function exportBackup(){
+    try{
+      var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a");
+      a.href=url; a.download="zakat-ledger-backup-"+today()+".json";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+    }catch(e){ alert("Couldn't create the backup file in this view. It works on the hosted app."); }
+  }
+
+  function importBackup(file){
+    var reader=new FileReader();
+    reader.onload=function(){
+      var parsed;
+      try{ parsed=JSON.parse(reader.result); }
+      catch(e){ alert("Couldn't read that file. Make sure it's a backup exported from this app."); return; }
+      if(!parsed||typeof parsed!=="object"||!parsed.years||typeof parsed.years!=="object"){
+        alert("That doesn't look like a zakat ledger backup."); return;
+      }
+      if(!ask("Importing will replace all current entries on this device. Continue?")) return;
+      if(!parsed.currency) parsed.currency="\u20B9";
+      var ys=Object.keys(parsed.years).map(Number).sort(function(a,b){return b-a;});
+      if(!parsed.currentYear||!parsed.years[parsed.currentYear]) parsed.currentYear=ys[0]||thisYear();
+      data=parsed; save(data); confirmDel=false; settingsOpen=false; renderAll();
+      alert("Backup restored \u2014 "+ys.length+" year"+(ys.length===1?"":"s")+" loaded.");
+    };
+    reader.readAsText(file);
+  }
+
+  function carry(){
+    var next=data.currentYear+1, bal=totals().balance;
+    if(!data.years[next]) data.years[next]=freshYear(bal);
+    data.currentYear=next; settingsOpen=false; save(data); renderAll();
+  }
+
+  // ── events ──
+  document.addEventListener("click",function(ev){
+    var el=ev.target.closest("[data-action]"); if(!el) return;
+    var a=el.getAttribute("data-action");
+    if(a==="toggle-settings"){ settingsOpen=!settingsOpen; confirmDel=false; renderSettings(); }
+    else if(a==="switch-year"){ switchYear(Number(el.getAttribute("data-year"))); }
+    else if(a==="add-year"){ switchYear(Math.max.apply(null,yearsList())+1); }
+    else if(a==="carry"){ carry(); }
+    else if(a==="remove-year"){ confirmDel=true; renderSettings(); }
+    else if(a==="cancel-remove"){ confirmDel=false; renderSettings(); }
+    else if(a==="confirm-remove"){ deleteYear(data.currentYear); }
+    else if(a==="kind"){ kind=el.getAttribute("data-kind"); renderSeg(); }
+    else if(a==="add-entry"){ addEntry(); }
+    else if(a==="del"){ delEntry(el.getAttribute("data-id")); }
+    else if(a==="export"){ exportBackup(); }
+    else if(a==="import"){ $("importFile").click(); }
+  });
+
+  $("importFile").addEventListener("change",function(ev){
+    var f=ev.target.files&&ev.target.files[0];
+    if(f) importBackup(f);
+    ev.target.value="";
+  });
+
+  // live edits inside settings (don't rebuild the sheet → keep caret)
+  document.addEventListener("input",function(ev){
+    var f=ev.target.getAttribute && ev.target.getAttribute("data-field");
+    if(f==="opening"){ yData().opening=Number(ev.target.value)||0; save(data); renderSummary(); updateCarryLabel(); }
+    else if(f==="currency"){ data.currency=ev.target.value||"\u20B9"; save(data); renderSummary(); updateCarryLabel(); }
+  });
+  function updateCarryLabel(){
+    var b=$("carryBtn"); if(!b) return; var t=totals(),y=data.currentYear;
+    b.textContent="Close "+y+" \u2192 carry "+cur()+fmt(t.balance)+" into "+(y+1);
+  }
+
+  // enter key on amount/note adds entry
+  ["amount","note"].forEach(function(id){
+    document.addEventListener("keydown",function(ev){
+      if(ev.target.id===id && ev.key==="Enter") addEntry();
+    });
+  });
+
+  // ── init ──
+  $("date").value=today();
+  renderAll();
+
+  // service worker (offline) — silent if unsupported/blocked
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",function(){ navigator.serviceWorker.register("./sw.js").catch(function(){}); });
+  }
+
+  // Android install prompt
+  var deferred=null;
+  window.addEventListener("beforeinstallprompt",function(e){
+    e.preventDefault(); deferred=e; $("installTip").style.display="block";
+  });
+  $("installBtn").addEventListener("click",function(){
+    if(!deferred) return; deferred.prompt();
+    deferred.userChoice.finally(function(){ deferred=null; $("installTip").style.display="none"; });
+  });
+})();
+</script>
+</body>
+</html>
