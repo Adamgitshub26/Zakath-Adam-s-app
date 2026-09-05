@@ -43,6 +43,7 @@
   .chip{font-size:13px;font-weight:600;color:var(--muted);background:var(--page);
     border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
   .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .yearSel{font-family:var(--sans);cursor:pointer;-webkit-appearance:none;appearance:none;padding-right:26px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%236E756C' stroke-width='1.5'/></svg>");background-repeat:no-repeat;background-position:right 10px center}
   .chips{display:flex;gap:6px;flex-wrap:wrap}
   .carryBtn{width:100%;font-size:13.5px;font-weight:600;color:var(--brand);background:var(--page);
     border:1px solid var(--line);border-radius:12px;padding:11px 0;cursor:pointer;margin-top:2px}
@@ -272,7 +273,10 @@
     var chips=ys.map(function(yr){
       return '<button class="chip'+(yr===y?' on':'')+'" data-action="switch-year" data-year="'+yr+'">'+yr+'</button>';
     }).join("");
-    chips+='<button class="chip" data-action="add-year">+ add</button>';
+    var have={}; ys.forEach(function(yr){have[yr]=1;});
+    var opts='<option value="">+ add year</option>';
+    for(var yy=2020; yy<=2100; yy++){ if(!have[yy]) opts+='<option value="'+yy+'">'+yy+'</option>'; }
+    chips+='<select class="chip yearSel" id="yearAdd">'+opts+'</select>';
 
     var removeHtml="";
     if(ys.length>1){
@@ -550,6 +554,10 @@
     var f=ev.target.files&&ev.target.files[0];
     if(f) importBackup(f);
     ev.target.value="";
+  });
+
+  document.addEventListener("change",function(ev){
+    if(ev.target.id==="yearAdd" && ev.target.value){ switchYear(Number(ev.target.value)); }
   });
 
   // live edits inside settings (don't rebuild the sheet → keep caret)
