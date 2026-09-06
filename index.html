@@ -86,6 +86,7 @@
 
   .entriesHead{font-size:13px;color:var(--muted);margin:22px 0 8px;padding-left:2px}
   .entryRow{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--lineSoft)}
+  .entryTap{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer}
   .dot{width:8px;height:8px;border-radius:999px;flex:0 0 auto}
   .entryMain{flex:1;min-width:0}
   .entryNote{font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -219,6 +220,27 @@
       <button class="addBtn" data-action="add-day" style="margin-top:14px">Add zakat for this day</button>
     </div>
   </div>
+
+  <div class="modal" id="editModal">
+    <div class="modalCard">
+      <div class="modalHead">
+        <div class="modalTitle">Edit entry</div>
+        <button class="modalX" data-action="close-edit" aria-label="Close">&times;</button>
+      </div>
+      <div class="seg">
+        <button class="segBtn" id="eSegAdded" data-action="edit-kind" data-kind="added">Added money</button>
+        <button class="segBtn" id="eSegGiven" data-action="edit-kind" data-kind="given">Gave zakat</button>
+      </div>
+      <div class="fieldRow">
+        <div class="amtField"><span class="cur amtCur">&#8377;</span>
+          <input class="amtInput" id="eAmount" type="number" inputmode="decimal" placeholder="0" /></div>
+        <input class="dateInput" id="eDate" type="date" />
+      </div>
+      <input class="noteInput" id="eNote" placeholder="Who / what for (optional)" />
+      <button class="addBtn" data-action="save-edit" style="margin-top:12px">Save changes</button>
+      <button class="removeYearBtn" data-action="edit-del">Delete this entry</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -347,10 +369,12 @@
       var color=isAdd?"var(--gold)":"var(--brand)";
       var note=e.note || (isAdd?"Money set aside":"Zakat given");
       return '<div class="entryRow">'+
-        '<div class="dot" style="background:'+(isAdd?"var(--gold)":"var(--brandMid)")+'"></div>'+
-        '<div class="entryMain"><div class="entryNote">'+escapeHtml(note)+'</div>'+
-        '<div class="entryDate">'+niceDate(e.date)+'</div></div>'+
-        '<div class="entryAmt" style="color:'+color+'">'+(isAdd?"+":"\u2212")+c+fmt(e.amount)+'</div>'+
+        '<div class="entryTap" data-action="edit" data-id="'+e.id+'">'+
+          '<div class="dot" style="background:'+(isAdd?"var(--gold)":"var(--brandMid)")+'"></div>'+
+          '<div class="entryMain"><div class="entryNote">'+escapeHtml(note)+'</div>'+
+          '<div class="entryDate">'+niceDate(e.date)+'</div></div>'+
+          '<div class="entryAmt" style="color:'+color+'">'+(isAdd?"+":"\u2212")+c+fmt(e.amount)+'</div>'+
+        '</div>'+
         '<button class="del" data-action="del" data-id="'+e.id+'" aria-label="Delete">&times;</button>'+
       '</div>';
     }).join("");
@@ -452,6 +476,36 @@
   }
   function closeDay(){ $("dayModal").style.display="none"; modalDate=null; }
 
+  var editId=null, editKind="given";
+  function renderEditKind(){
+    $("eSegAdded").className="segBtn"+(editKind==="added"?" added":"");
+    $("eSegGiven").className="segBtn"+(editKind==="given"?" given":"");
+    $("eNote").placeholder=editKind==="given"?"Who / what for (optional)":"Note (optional)";
+  }
+  function openEdit(id){
+    var e=yData().entries.filter(function(x){return x.id===id;})[0];
+    if(!e) return;
+    editId=id; editKind=e.kind;
+    renderEditKind();
+    $("eAmount").value=e.amount;
+    $("eDate").value=e.date;
+    $("eNote").value=e.note||"";
+    $("editModal").style.display="flex";
+  }
+  function closeEdit(){ $("editModal").style.display="none"; editId=null; }
+  function saveEdit(){
+    var e=yData().entries.filter(function(x){return x.id===editId;})[0];
+    if(!e){ closeEdit(); return; }
+    var val=parseFloat($("eAmount").value);
+    if(!val||val<=0){ $("eAmount").focus(); return; }
+    e.kind=editKind; e.amount=val;
+    e.date=$("eDate").value||e.date;
+    e.note=($("eNote").value||"").trim();
+    save(data); closeEdit();
+    renderSummary(); renderEntries();
+    if(currentPage==="monthly") renderMonthly();
+  }
+
   function renderAll(){
     $("tabLedger").className="tab"+(currentPage==="ledger"?" on":"");
     $("tabMonthly").className="tab"+(currentPage==="monthly"?" on":"");
@@ -529,6 +583,7 @@
   // ── events ──
   document.addEventListener("click",function(ev){
     if(ev.target.id==="dayModal"){ closeDay(); return; }
+    if(ev.target.id==="editModal"){ closeEdit(); return; }
     var el=ev.target.closest("[data-action]"); if(!el) return;
     var a=el.getAttribute("data-action");
     if(a==="toggle-settings"){ settingsOpen=!settingsOpen; confirmDel=false; renderSettings(); }
@@ -548,6 +603,11 @@
     else if(a==="close-day"){ closeDay(); }
     else if(a==="add-day"){ var dd=modalDate; closeDay(); goLogDay(dd); }
     else if(a==="del-day"){ delEntry(el.getAttribute("data-id")); renderMonthly(); openDay(modalDate); }
+    else if(a==="edit"){ openEdit(el.getAttribute("data-id")); }
+    else if(a==="close-edit"){ closeEdit(); }
+    else if(a==="edit-kind"){ editKind=el.getAttribute("data-kind"); renderEditKind(); }
+    else if(a==="save-edit"){ saveEdit(); }
+    else if(a==="edit-del"){ var eid=editId; closeEdit(); delEntry(eid); if(currentPage==="monthly") renderMonthly(); }
   });
 
   $("importFile").addEventListener("change",function(ev){
